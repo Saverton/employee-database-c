@@ -4,10 +4,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "common.h"
-#include "parse.h"
+#include "../include/common.h"
+#include "../include/parse.h"
 
-int output_file(int fd, struct dbheader_t *header) {
+int output_file(int fd, struct dbheader_t *header,
+                struct employee_t *employees) {
   if (fd < 0) {
     printf("Invalid FD\n");
     return STATUS_ERROR;
@@ -29,7 +30,7 @@ int output_file(int fd, struct dbheader_t *header) {
   return STATUS_GOOD;
 }
 
-int create_db_header(int fd, struct dbheader_t **headerOut) {
+int create_db_header(struct dbheader_t **headerOut) {
   struct dbheader_t *header = calloc(1, sizeof(struct dbheader_t));
   if (header == NULL) {
     printf("Malloc failed to create db header\n");

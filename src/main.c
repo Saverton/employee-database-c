@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "common.h"
-#include "file.h"
-#include "parse.h"
+#include "../include/common.h"
+#include "../include/file.h"
+#include "../include/parse.h"
 
 void print_usage(char *argv[]) {
   printf("Usage: %s -n -f <database file>\n", argv[0]);
@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
 
   int dbfd = -1;
   struct dbheader_t *dbhdr = NULL;
+  struct employee_t *employees = NULL;
 
   while ((c = getopt(argc, argv, "nf:")) != -1) {
     switch (c) {
@@ -51,8 +52,9 @@ int main(int argc, char *argv[]) {
       return -1;
     }
 
-    if (create_db_header(dbfd, &dbhdr) == STATUS_ERROR) {
+    if (create_db_header(&dbhdr) == STATUS_ERROR) {
       printf("Failed to create database header\n");
+      close(dbfd);
       return -1;
     }
   } else {
@@ -64,6 +66,7 @@ int main(int argc, char *argv[]) {
 
     if (validate_db_header(dbfd, &dbhdr) == STATUS_ERROR) {
       printf("Invalid db header\n");
+      close(dbfd);
       return -1;
     }
   }
@@ -72,8 +75,9 @@ int main(int argc, char *argv[]) {
   printf("Filesize: %d\n", dbhdr->filesize);
   printf("Count: %d\n", dbhdr->count);
 
-  if (output_file(dbfd, dbhdr) == STATUS_ERROR) {
+  if (output_file(dbfd, dbhdr, employees) == STATUS_ERROR) {
     printf("Failed to write database header to file\n");
+    close(dbfd);
     return -1;
   }
 
