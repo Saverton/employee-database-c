@@ -1,7 +1,6 @@
 #include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 #include "../include/common.h"
@@ -12,6 +11,7 @@ void print_usage(char *argv[]) {
   printf("Usage: %s -n -f <database file>\n", argv[0]);
   printf("\t -n   -  create new database file\n");
   printf("\t -f   -  (required) path to database file\n");
+  printf("\t -a   -  add employee as CSV (name,address,hours)\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -83,17 +83,7 @@ int main(int argc, char *argv[]) {
   }
 
   if (addstring) {
-    dbhdr->count++;
-
-    employees =
-        reallocarray(employees, dbhdr->count, sizeof(struct employee_t));
-    if (employees == NULL) {
-      printf("Failed to allocate memory for new employee\n");
-      close(dbfd);
-      return -1;
-    }
-
-    if (add_employee(dbhdr, employees, addstring) != STATUS_GOOD) {
+    if (add_employee(dbhdr, &employees, addstring) != STATUS_GOOD) {
       printf("Failed to add new employee\n");
       close(dbfd);
       return -1;

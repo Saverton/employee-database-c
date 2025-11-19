@@ -8,17 +8,43 @@
 #include "../include/common.h"
 #include "../include/parse.h"
 
-int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees,
+int add_employee(struct dbheader_t *dbhdr, struct employee_t **employees,
                  char *addstring) {
-  char *name = strtok(addstring, ",");
-  char *addr = strtok(NULL, ",");
-  char *hours = strtok(NULL, ",");
+  if (dbhdr == NULL)
+    return STATUS_ERROR;
+  if (employees == NULL)
+    return STATUS_ERROR;
+  if (*employees == NULL)
+    return STATUS_ERROR;
+  if (addstring == NULL)
+    return STATUS_ERROR;
 
-  struct employee_t *new_employee = &employees[dbhdr->count - 1];
+  char *name = strtok(addstring, ",");
+  if (name == NULL)
+    return STATUS_ERROR;
+
+  char *addr = strtok(NULL, ",");
+  if (addr == NULL)
+    return STATUS_ERROR;
+
+  char *hours = strtok(NULL, ",");
+  if (hours == NULL)
+    return STATUS_ERROR;
+
+  struct employee_t *e =
+      reallocarray(*employees, dbhdr->count + 1, sizeof(struct employee_t));
+  if (e == NULL)
+    return STATUS_ERROR;
+
+  dbhdr->count++;
+
+  struct employee_t *new_employee = &e[dbhdr->count - 1];
 
   strncpy(new_employee->name, name, sizeof(new_employee->name));
   strncpy(new_employee->address, addr, sizeof(new_employee->address));
   new_employee->hours = atoi(hours);
+
+  *employees = e;
 
   return STATUS_GOOD;
 }
