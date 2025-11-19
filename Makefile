@@ -6,6 +6,7 @@ run: clean default
 	./$(TARGET) -f ./mynewfile.db -n
 	./$(TARGET) -f ./mynewfile.db -a "John Meadows,980 Sills Mill Rd.,50"
 	./$(TARGET) -f ./mynewfile.db -a "Ginger Meyer,1021 Parkerville Rd.,35" -l
+	./$(TARGET) -f ./mynewfile.db -u "Ginger Meyer,40" -l
 	./$(TARGET) -f ./mynewfile.db -r "John Meadows" -l
 
 default: $(TARGET)

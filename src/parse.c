@@ -9,6 +9,33 @@
 #include "../include/common.h"
 #include "../include/parse.h"
 
+int update_employee_hours(struct dbheader_t *dbhdr,
+                          struct employee_t *employees, char *updatestring) {
+  if (dbhdr == NULL)
+    return STATUS_ERROR;
+  if (employees == NULL)
+    return STATUS_ERROR;
+  if (updatestring == NULL)
+    return STATUS_ERROR;
+
+  char *name = strtok(updatestring, ",");
+  if (name == NULL)
+    return STATUS_ERROR;
+
+  char *hours = strtok(NULL, ",");
+  if (hours == NULL)
+    return STATUS_ERROR;
+
+  int i = 0;
+  for (; i < dbhdr->count; i++) {
+    if (strncmp(employees[i].name, name, sizeof(employees[i].name)) == 0) {
+      employees[i].hours = atoi(hours);
+    }
+  }
+
+  return STATUS_GOOD;
+}
+
 int remove_employees(struct dbheader_t *dbhdr, struct employee_t **employees,
                      char *removename) {
   if (dbhdr == NULL)

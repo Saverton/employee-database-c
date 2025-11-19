@@ -14,6 +14,7 @@ void print_usage(char *argv[]) {
   printf("\t -a   -  add employee as CSV <name,address,hours>\n");
   printf("\t -l   -  list all employees\n");
   printf("\t -r   -  remove employee with <name>\n");
+  printf("\t -u   -  update employee hours CSV <name,newhours>\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -23,12 +24,13 @@ int main(int argc, char *argv[]) {
   char *addstring = NULL;
   bool list = false;
   char *removename = NULL;
+  char *updatestring = NULL;
 
   int dbfd = -1;
   struct dbheader_t *dbhdr = NULL;
   struct employee_t *employees = NULL;
 
-  while ((c = getopt(argc, argv, "nf:a:lr:")) != -1) {
+  while ((c = getopt(argc, argv, "nf:a:lr:u:")) != -1) {
     switch (c) {
     case 'n':
       newfile = true;
@@ -44,6 +46,9 @@ int main(int argc, char *argv[]) {
       break;
     case 'r':
       removename = optarg;
+      break;
+    case 'u':
+      updatestring = optarg;
       break;
     case '?':
       printf("Unknown option -%c\n", c);
@@ -94,6 +99,13 @@ int main(int argc, char *argv[]) {
 
   if (addstring && add_employee(dbhdr, &employees, addstring) != STATUS_GOOD) {
     printf("Failed to add new employee\n");
+    close(dbfd);
+    return -1;
+  }
+
+  if (updatestring &&
+      update_employee_hours(dbhdr, employees, updatestring) != STATUS_GOOD) {
+    printf("Failed to update employee hours\n");
     close(dbfd);
     return -1;
   }
