@@ -1,6 +1,7 @@
 #include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "../include/common.h"
@@ -17,18 +18,22 @@ int main(int argc, char *argv[]) {
   int c;
   bool newfile = false;
   char *filepath = NULL;
+  char *addstring = NULL;
 
   int dbfd = -1;
   struct dbheader_t *dbhdr = NULL;
   struct employee_t *employees = NULL;
 
-  while ((c = getopt(argc, argv, "nf:")) != -1) {
+  while ((c = getopt(argc, argv, "nf:a:")) != -1) {
     switch (c) {
     case 'n':
       newfile = true;
       break;
     case 'f':
       filepath = optarg;
+      break;
+    case 'a':
+      addstring = optarg;
       break;
     case '?':
       printf("Unknown option -%c\n", c);
@@ -71,11 +76,31 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  printf("Version: %d\n", dbhdr->version);
-  printf("Filesize: %d\n", dbhdr->filesize);
-  printf("Count: %d\n", dbhdr->count);
+  if (read_employees(dbfd, dbhdr, &employees) != STATUS_GOOD) {
+    printf("Failed to read employees from database\n");
+    close(dbfd);
+    return -1;
+  }
 
-  if (output_file(dbfd, dbhdr, employees) == STATUS_ERROR) {
+  if (addstring) {
+    dbhdr->count++;
+
+    employees =
+        reallocarray(employees, dbhdr->count, sizeof(struct employee_t));
+    if (employees == NULL) {
+      printf("Failed to allocate memory for new employee\n");
+      close(dbfd);
+      return -1;
+    }
+
+    if (add_employee(dbhdr, employees, addstring) != STATUS_GOOD) {
+      printf("Failed to add new employee\n");
+      close(dbfd);
+      return -1;
+    }
+  }
+
+  if (output_file(dbfd, dbhdr, employees) != STATUS_GOOD) {
     printf("Failed to write database header to file\n");
     close(dbfd);
     return -1;
