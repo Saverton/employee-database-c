@@ -11,8 +11,9 @@ void print_usage(char *argv[]) {
   printf("Usage: %s -n -f <database file>\n", argv[0]);
   printf("\t -n   -  create new database file\n");
   printf("\t -f   -  (required) path to database file\n");
-  printf("\t -a   -  add employee as CSV (name,address,hours)\n");
+  printf("\t -a   -  add employee as CSV <name,address,hours>\n");
   printf("\t -l   -  list all employees\n");
+  printf("\t -r   -  remove employee with <name>\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -21,12 +22,13 @@ int main(int argc, char *argv[]) {
   char *filepath = NULL;
   char *addstring = NULL;
   bool list = false;
+  char *removename = NULL;
 
   int dbfd = -1;
   struct dbheader_t *dbhdr = NULL;
   struct employee_t *employees = NULL;
 
-  while ((c = getopt(argc, argv, "nf:a:l")) != -1) {
+  while ((c = getopt(argc, argv, "nf:a:lr:")) != -1) {
     switch (c) {
     case 'n':
       newfile = true;
@@ -39,6 +41,9 @@ int main(int argc, char *argv[]) {
       break;
     case 'l':
       list = true;
+      break;
+    case 'r':
+      removename = optarg;
       break;
     case '?':
       printf("Unknown option -%c\n", c);
@@ -87,12 +92,17 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  if (addstring) {
-    if (add_employee(dbhdr, &employees, addstring) != STATUS_GOOD) {
-      printf("Failed to add new employee\n");
-      close(dbfd);
-      return -1;
-    }
+  if (addstring && add_employee(dbhdr, &employees, addstring) != STATUS_GOOD) {
+    printf("Failed to add new employee\n");
+    close(dbfd);
+    return -1;
+  }
+
+  if (removename &&
+      remove_employees(dbhdr, &employees, removename) != STATUS_GOOD) {
+    printf("Failed to remove employee\n");
+    close(dbfd);
+    return -1;
   }
 
   if (list && list_employees(dbhdr, employees) != STATUS_GOOD) {

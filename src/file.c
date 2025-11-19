@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "common.h"
-#include "file.h"
+#include "../include/common.h"
+#include "../include/file.h"
 
 int create_db_file(char *filepath) {
   int fd = open(filepath, O_RDONLY);

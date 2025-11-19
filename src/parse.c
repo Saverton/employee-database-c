@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +8,67 @@
 
 #include "../include/common.h"
 #include "../include/parse.h"
+
+int remove_employees(struct dbheader_t *dbhdr, struct employee_t **employees,
+                     char *removename) {
+  if (dbhdr == NULL)
+    return STATUS_ERROR;
+  if (employees == NULL)
+    return STATUS_ERROR;
+  if (*employees == NULL)
+    return STATUS_ERROR;
+  if (removename == NULL)
+    return STATUS_ERROR;
+
+  struct employee_t *e = *employees;
+
+  int newcount = dbhdr->count;
+  bool *remove = calloc(dbhdr->count, sizeof(bool));
+  if (remove == NULL)
+    return STATUS_ERROR;
+
+  int i = 0;
+  for (; i < dbhdr->count; i++) {
+    if (strncmp(e[i].name, removename, sizeof(e[i].name)) == 0) {
+      remove[i] = true;
+      newcount--;
+    } else {
+      remove[i] = false;
+    }
+  }
+
+  struct employee_t *e2 = calloc(newcount, sizeof(struct employee_t));
+  if (e2 == NULL) {
+    free(remove);
+    return STATUS_ERROR;
+  }
+
+  i = 0;     // read from old arr
+  int j = 0; // write to new arr
+  for (; i < dbhdr->count; i++) {
+    if (remove[i] == true) {
+      continue;
+    }
+
+    if (j >= newcount) {
+      printf("unexpected state\n");
+      free(remove);
+      free(e2);
+      return STATUS_ERROR;
+    }
+
+    e2[j] = e[i];
+    j++;
+  }
+
+  *employees = e2;
+  dbhdr->count = newcount;
+
+  free(remove);
+  free(e);
+
+  return STATUS_GOOD;
+}
 
 int list_employees(struct dbheader_t *dbhdr, struct employee_t *employees) {
   if (dbhdr == NULL)
@@ -98,12 +160,13 @@ int output_file(int fd, struct dbheader_t *header,
   }
 
   int realcount = header->count;
+  int newsize =
+      sizeof(struct dbheader_t) + (realcount * sizeof(struct employee_t));
 
   header->version = htons(header->version);
   header->count = htons(header->count);
   header->magic = htonl(header->magic);
-  header->filesize = htonl(sizeof(struct dbheader_t) +
-                           (realcount * sizeof(struct employee_t)));
+  header->filesize = htonl(newsize);
 
   lseek(fd, 0, SEEK_SET);
 
@@ -120,6 +183,11 @@ int output_file(int fd, struct dbheader_t *header,
       perror("write");
       return STATUS_ERROR;
     }
+  }
+
+  if (ftruncate(fd, newsize) != 0) {
+    perror("ftruncate");
+    return STATUS_ERROR;
   }
 
   return STATUS_GOOD;
